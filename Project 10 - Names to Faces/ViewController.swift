@@ -17,6 +17,15 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         // Do any additional setup after loading the view, typically from a nib.
         
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addNewPerson))
+        
+        // load people array from disk
+        let defaults = UserDefaults.standard
+        
+        if let savedPeople = defaults.object(forKey: "people") as? Data {
+            if let decodePeople = try? NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(savedPeople) as? [Person] ?? [Person]() {
+                people = decodePeople
+            }
+        }
     }
     
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
@@ -57,6 +66,7 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
             person.name = newName
             
             self?.collectionView.reloadData()
+            self?.save()
         }))
         
         present(ac, animated: true)
@@ -84,6 +94,8 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         collectionView.reloadData()
         
         dismiss(animated: true)
+        
+        self.save()
     }
 
     func getDocumentsDirectory() -> URL {
@@ -92,5 +104,12 @@ class ViewController: UICollectionViewController, UIImagePickerControllerDelegat
         return paths[0]
     }
 
+    
+    func save() {
+        if let savedData = try? NSKeyedArchiver.archivedData(withRootObject: people, requiringSecureCoding: false) { // converts array of obj into Data obj
+            let defaults = UserDefaults.standard
+            defaults.set(savedData, forKey: "people")
+        }
+    }
 }
 
